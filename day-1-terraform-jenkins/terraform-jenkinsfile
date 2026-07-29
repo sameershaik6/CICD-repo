@@ -1,0 +1,432 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('first') {
+            steps {
+                echo 'Hello first stage'
+            }
+        }
+    }
+}
+
+--------------------------
+multi stage example:
+-------------------------
+pipeline {
+    agent any
+
+    stages {
+        stage('first') {
+            steps {
+                echo 'Hello first stage'
+            }
+        }
+        
+        stage('second') {
+            steps {
+                echo 'Hello second stage'
+            }
+        }
+    }
+
+
+### With terraform examples ###
+
+
+#Ex:-1
+
+pipeline {
+    agent any
+
+    stages {
+        stage('git checkout') {
+            steps {
+               git branch: 'main', url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
+            }
+        }
+         stage('init') {
+            steps {
+                sh '''
+                     cd Day-1-Terraform-basic-config
+                     terraform init
+                     '''
+                
+            }
+        }
+        stage('plan') {
+            steps {
+                sh '''
+                    cd Day-1-Terraform-basic-config
+                    terraform plan
+                    '''
+            }
+        }
+        stage('apply') {
+            steps {
+                sh '''
+                    cd Day-1-Terraform-basic-config
+                    terraform apply -auto-approve
+                    '''
+            }
+        }
+    }
+}
+
+
+
+
+#Ex-2
+
+pipeline {
+    agent any
+
+    stages {
+        stage('git checkout') {
+            steps {
+               git branch: 'main', url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
+            }
+        }
+         stage('init') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+               sh 'terraform init'
+               sh 'terraform plan'
+               sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+      
+    }
+}
+
+
+
+
+#Ex:-3
+
+pipeline {
+    agent any
+
+    stages {
+        stage('git checkout') {
+            steps {
+               git branch: 'main', url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
+            }
+        }
+         stage('init') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+               sh '''
+               terraform init
+               terraform plan
+               terraform apply -auto-approve
+               '''
+                }
+            }
+        }
+      
+    }
+}
+
+
+
+#Ex;-4
+
+pipeline {
+    agent any
+
+    stages {
+        stage('git checkout') {
+            steps {
+               git branch: 'main', url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
+            }
+        }
+         stage('init') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                  sh  'terraform init'
+              
+                }
+            }
+        }
+        stage('plan') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                  sh  'terraform plan'
+              
+                }
+            }
+        }
+        stage('apply') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                  sh  'terraform apply -auto-approve'
+              
+                }
+            }
+        }
+      
+    }
+}
+
+
+
+
+
+#Ex-5
+
+pipeline {
+    agent any
+
+    stages {
+        stage('git checkout') {
+            steps {
+               git branch: 'main', url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
+            }
+        }
+         stage('init') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                  sh  'terraform init'
+              
+                }
+            }
+        }
+        stage('plan') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                  sh  'terraform plan'
+              
+                }
+            }
+        }
+
+        stage ('approve plan') {
+            steps {
+                input 'Do you want to apply the changes?'
+            }
+        }
+
+        stage('apply') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                  sh  'terraform apply -auto-approve'
+              
+                }
+            }
+        }
+      
+    }
+}
+
+
+## Exmample init,validate, fmt, plan, approve 
+
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
+            }
+        }
+
+        stage('Init') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                    sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Validate') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                    sh 'terraform validate'
+                }
+            }
+        }
+
+        stage('Fmt Check') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                    sh 'terraform fmt -check'
+                }
+            }
+        }
+
+        stage('Plan') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                    sh 'terraform plan'
+                }
+            }
+        }
+
+        stage('Approval') {
+            steps {
+                input 'Approve Terraform Apply?'
+            }
+        }
+
+        stage('Apply') {
+            steps {
+                dir('Day-1-Terraform-basic-config') {
+                    sh 'terraform apply -auto-approve'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Infrastructure provisioned successfully'
+        }
+
+        failure {
+            echo 'Terraform deployment failed'
+        }
+    }
+}
+
+# Examaple with lable pipeline
+pipeline {
+    agent {
+        label 'dev'  #here label should match
+    }
+
+    stages {
+        stage('git checkout') {
+            steps {
+               git branch: 'main', url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
+            }
+        }
+        
+    }
+}
+
+
+#choice Parameters
+
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name: 'ACTION',
+            choices: ['Apply', 'Destroy'],
+            description: 'Select the Terraform action'
+        )
+    }
+
+    stages {
+        stage('Git Clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/CloudTechDevOps/Terraform_CICD.git'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                sh 'terraform init'
+            }
+        }
+
+        stage('Terraform Plan') {
+            when {
+                expression { params.ACTION == 'Apply' }
+            }
+            steps {
+                sh 'terraform plan -out=tfplan'
+            }
+        }
+
+        stage('Approval') {
+            steps {
+                input(
+                    message: "You selected ${params.ACTION}. Continue?",
+                    ok: "Proceed"
+                )
+            }
+        }
+
+        stage('Execute') {
+            steps {
+                script {
+                    if (params.ACTION == 'Apply') {
+                        sh 'terraform apply -auto-approve tfplan'
+                    } else {
+                        sh 'terraform destroy -auto-approve'
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+# Specif directory inside the repo
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name: 'ACTION',
+            choices: ['Apply', 'Destroy'],
+            description: 'Select the Terraform action'
+        )
+    }
+
+    stages {
+        stage('Git Clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/CloudTechDevOps/1030-terraform-practice.git'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                dir('Day-2-terraform-configurtions') {
+                 sh 'terraform init'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            when {
+                expression { params.ACTION == 'Apply' }
+            }
+            steps {
+                dir('Day-2-terraform-configurtions') {
+                sh 'terraform plan -out=tfplan'
+                }
+            }
+        }
+
+        stage('Approval') {
+            steps {
+                input(
+                    message: "You selected ${params.ACTION}. Continue?",
+                    ok: "Proceed"
+                )
+            }
+        }
+
+        stage('Execute') {
+            steps {
+                script {
+                    if (params.ACTION == 'Apply') {
+                        dir('Day-2-terraform-configurtions') {
+                        sh 'terraform apply -auto-approve tfplan'
+                         }
+                    } else {
+                        sh 'terraform destroy -auto-approve'
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,74 @@
+pipeline{
+ agent any
+ 
+ parameters{
+     choice(
+         name: 'ACTION',
+         choices: ['apply', 'destroy'],
+         description: 'select terraform action'
+         )
+ }
+ stages{
+     stage('clone'){
+         steps{
+           git branch: 'main', url: 'https://github.com/sameershaik6/CICD-repo.git' 
+         }
+     }
+     
+      stage('init'){
+         steps{
+             dir('day-2') {
+             sh 'terraform init' 
+      }
+           
+         }
+     }
+     
+        stage('Terraform Validate') {
+            steps {
+                dir('day-2'){
+                sh 'terraform validate'
+            }
+            }
+        }
+       stage('Terraform Fmt') {
+            steps {
+                dir('day-2'){
+                sh 'terraform fmt -check'
+            }
+            }
+        }
+     stage('plan'){
+         steps{
+         dir('day-2') {
+           sh 'terraform plan' 
+         }
+         }
+     }
+      stage('Approval') {
+            steps {
+                script {
+                    input(
+                        message: 'Do you want to apply the Terraform changes?',
+                        ok: 'Approve'
+                    )
+                }
+            }
+        }
+        stage('apply'){
+            steps{
+     script {
+    if (params.ACTION == "apply") {
+        dir('day-2'){
+        sh 'terraform apply -auto-approve'
+        }
+    } else {
+        dir('day-2'){
+        sh 'terraform destroy -auto-approve'
+        }
+    }
+}
+}
+}
+ }
+}
