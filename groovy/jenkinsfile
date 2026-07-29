@@ -26,7 +26,27 @@ node {
         }
     }
 }
+ ---------------
 
+#if-else
+node {
+
+    def environment = "dev"
+
+    stage('Decision') {
+
+        if(environment == "dev") {
+            echo "Deploying to DEV"
+        }
+        else {
+            echo "Deploying to PROD"
+        }
+
+    }
+
+}
+
+-------------
 
 #for loop condition
 
@@ -46,8 +66,8 @@ node {
 
 node {
 
-    // Correct way to define parameters in Scripted pipeline
-    properties([
+    try {
+ properties([
         parameters([
             choice(
                 name: 'action',
@@ -56,27 +76,52 @@ node {
             )
         ])
     ])
-
-    stage('Preparation') {
-        git branch: 'main', url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
-    }
-
-    stage('Init') {
-        dir('Day-1-Terraform-basic-config') {
-            sh 'terraform init'
+        stage('Checkout') {
+            git branch: 'main',
+                url: 'https://github.com/sameershaik6/CICD-repo.git'
         }
-    }
 
-    stage('Plan') {
-        dir('Day-1-Terraform-basic-config') {
-            sh 'terraform plan'
+        stage('Init') {
+            dir('terraform-file') {
+                sh 'terraform init'
+            }
         }
-    }
 
-    stage('Execute') {
-        dir('Day-1-Terraform-basic-config') {
-            sh "terraform ${params.action} -auto-approve"
+        stage('Validate') {
+            dir('terraform-file') {
+                sh 'terraform validate'
+            }
         }
+
+        stage('Fmt Check') {
+            dir('terraform-file') {
+                sh 'terraform fmt -check'
+            }
+        }
+
+        stage('Plan') {
+            dir('terraform-file') {
+                sh 'terraform plan'
+            }
+        }
+
+        stage('Approval') {
+            input 'Approve Terraform Apply?'
+        }
+
+        stage('Apply') {
+            dir('terraform-file') {
+                sh "terraform ${params.action} -auto-approve"
+            }
+        }
+
+        echo "Infrastructure provisioned successfully"
+
+    } catch(Exception e) {
+
+        echo "Terraform deployment failed"
+        throw e
+
     }
 }
 
@@ -116,7 +161,7 @@ node {
 
 
 
-## init, pla,fmt,apply
+## init, validate,pla,fmt,apply
 
 node {
 
@@ -124,29 +169,29 @@ node {
 
         stage('Checkout') {
             git branch: 'main',
-                url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
+                url: 'https://github.com/sameershaik6/CICD-repo.git'
         }
 
         stage('Init') {
-            dir('Day-1-Terraform-basic-config') {
+            dir('terraform-file') {
                 sh 'terraform init'
             }
         }
 
         stage('Validate') {
-            dir('Day-1-Terraform-basic-config') {
+            dir('terraform-file') {
                 sh 'terraform validate'
             }
         }
 
         stage('Fmt Check') {
-            dir('Day-1-Terraform-basic-config') {
+            dir('terraform-file') {
                 sh 'terraform fmt -check'
             }
         }
 
         stage('Plan') {
-            dir('Day-1-Terraform-basic-config') {
+            dir('terraform-file') {
                 sh 'terraform plan'
             }
         }
@@ -156,7 +201,7 @@ node {
         }
 
         stage('Apply') {
-            dir('Day-1-Terraform-basic-config') {
+            dir('terraform-file') {
                 sh 'terraform apply -auto-approve'
             }
         }
@@ -182,4 +227,10 @@ node('dev') {
             url: 'https://github.com/CloudTechDevOps/Terraform-0730am.git'
     }
 
+}
+--------------
+node {
+    stage('Terraform') {
+        sh 'terraform version'
+    }
 }
